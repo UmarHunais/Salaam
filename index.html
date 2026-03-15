@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salaam | Luxury Fragrance</title>
+    <meta name="description" content="Salaam — the pinnacle of luxury fragrance. Discover scents crafted with the world's rarest ingredients.">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* ===== HOMEPAGE SPECIFIC ===== */
+        .scrollytelling-section { height: 400vh; position: relative; background-color: var(--bg-color); }
+        .canvas-container { position: sticky; top: 0; left: 0; width: 100%; height: 100vh; overflow: hidden; z-index: 1; }
+        #hero-canvas { width: 100%; height: 100%; object-fit: cover; }
+        .scroll-content { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
+        .text-beat {
+            height: 100vh; display: flex; flex-direction: column; justify-content: center;
+            padding: 0 10vw; opacity: 0; transform: translateY(30px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        .text-beat.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+        #beat-a, #beat-d { align-items: center; text-align: center; }
+        #beat-b { align-items: flex-start; text-align: left; }
+        #beat-c { align-items: flex-end; text-align: right; }
+        .subtitle { font-size: 1rem; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1rem; color: var(--accent-gold-start); }
+        /* Loading Screen */
+        #loader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-color); z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: opacity 0.6s ease;
+        }
+        .progress-bar-container { width: 300px; height: 2px; background: rgba(255,255,255,0.1); margin-top: 2rem; }
+        #progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent-gold-start), var(--accent-gold-end)); transition: width 0.1s linear; }
+        /* Scroll indicator */
+        .scroll-indicator {
+            position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
+            z-index: 100; text-align: center; opacity: 0.5;
+            animation: scrollPulse 2s ease-in-out infinite;
+        }
+        .scroll-indicator span { display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 0.5rem; }
+        @keyframes scrollPulse { 0%, 100% { opacity: 0.5; transform: translateX(-50%) translateY(0); } 50% { opacity: 1; transform: translateX(-50%) translateY(-5px); } }
+    </style>
+</head>
+<body>
+
+    <!-- Loading Screen -->
+    <div id="loader">
+        <h1 class="text-gold-gradient" style="font-size: 2rem; letter-spacing: 0.2em;">SALAAM</h1>
+        <div class="progress-bar-container">
+            <div id="progress-bar"></div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <a href="index.html" class="nav-brand text-gold-gradient">Salaam</a>
+
+        <div class="nav-right">
+            <ul class="nav-links">
+                <li><a href="index.html" class="active">Home</a></li>
+                <li><a href="shop.html">Shop</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="contact.html">Contact</a></li>
+            </ul>
+
+            <button class="cart-icon" aria-label="Shopping Cart">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0"/>
+                </svg>
+                <span class="cart-count" style="display:none;">0</span>
+            </button>
+
+            <button class="hamburger" aria-label="Menu">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 12h18M3 6h18M3 18h18"/>
+                </svg>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Cart Overlay & Panel -->
+    <div class="cart-overlay"></div>
+    <div class="cart-panel">
+        <div class="cart-header">
+            <h3>Your Cart</h3>
+            <button class="cart-close">&times;</button>
+        </div>
+        <div class="cart-items">
+            <div class="cart-empty">Your cart is empty.</div>
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Total</span>
+                <span class="cart-total-amount">$0</span>
+            </div>
+            <button class="btn btn-primary" style="width:100%;">Checkout</button>
+        </div>
+    </div>
+
+    <!-- Product Modal -->
+    <div class="modal-overlay" id="productModal">
+        <div class="modal-content">
+            <button class="modal-close" id="modalClose">&times;</button>
+            <div class="modal-gallery">
+                <div class="modal-gallery-main" id="galleryMain"></div>
+                <button class="gallery-arrow prev" id="galleryPrev">&#8249;</button>
+                <button class="gallery-arrow next" id="galleryNext">&#8250;</button>
+                <div class="gallery-thumbs" id="galleryThumbs"></div>
+            </div>
+            <div class="modal-details">
+                <span class="modal-category" id="modalCategory"></span>
+                <h2 class="modal-title" id="modalTitle"></h2>
+                <div class="modal-rating-row">
+                    <span class="stars" id="modalStars"></span>
+                    <span class="review-count" id="modalReviews"></span>
+                </div>
+                <div class="modal-price" id="modalPrice"></div>
+                <p class="modal-desc" id="modalDesc"></p>
+                <div class="modal-notes">
+                    <h4>Scent Profile</h4>
+                    <div class="note-row"><span class="note-label">Top Notes</span><span class="note-value" id="noteTop"></span></div>
+                    <div class="note-row"><span class="note-label">Heart Notes</span><span class="note-value" id="noteHeart"></span></div>
+                    <div class="note-row"><span class="note-label">Base Notes</span><span class="note-value" id="noteBase"></span></div>
+                </div>
+                <div class="modal-specs" id="modalSpecs"></div>
+                <button class="btn btn-gold" id="modalAddCart" style="width:100%;">Add to Cart</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scroll Indicator -->
+    <div class="scroll-indicator" id="scrollIndicator">
+        <span>Scroll to Explore</span>
+        <svg width="16" height="24" viewBox="0 0 16 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M8 4v16M8 20l-4-4M8 20l4-4"/>
+        </svg>
+    </div>
+
+    <!-- ========================= SCROLLYTELLING SECTION ========================= -->
+    <section class="scrollytelling-section" id="scroll-wrapper">
+        <div class="canvas-container">
+            <canvas id="hero-canvas"></canvas>
+        </div>
+        <div class="scroll-content">
+            <div class="text-beat" id="beat-a" data-start="0" data-end="0.2">
+                <p class="subtitle">The Art of Fragrance</p>
+                <h1 class="text-huge text-gold-gradient">Discover scents<br>crafted to awaken<br>the senses.</h1>
+            </div>
+            <div class="text-beat" id="beat-b" data-start="0.25" data-end="0.45">
+                <p class="subtitle">Rare Ingredients</p>
+                <h2 class="text-xl">Our fragrances combine<br>rare oils and refined<br>craftsmanship.</h2>
+            </div>
+            <div class="text-beat" id="beat-c" data-start="0.5" data-end="0.7">
+                <p class="subtitle">Timeless Elegance</p>
+                <h2 class="text-xl">Every bottle designed<br>for sophistication.</h2>
+            </div>
+            <div class="text-beat" id="beat-d" data-start="0.75" data-end="0.95">
+                <h2 class="text-huge text-gold-gradient" style="margin-bottom: 2rem;">Discover Salaam</h2>
+                <a href="shop.html" class="btn btn-primary" style="pointer-events: auto;">Explore the Collection</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================= NEW ARRIVALS ========================= -->
+    <section class="section-padding" style="padding: 0 5vw;">
+        <div class="container reveal" style="text-align:center; margin-bottom: 3rem;">
+            <span class="section-label">Just Launched</span>
+            <h2 class="text-xl section-heading">New Arrivals</h2>
+            <p class="section-desc" style="margin: 0 auto;">The latest additions to the Salaam collection — each a masterwork of scent and artistry.</p>
+        </div>
+        <div class="product-grid" style="padding: 0 5vw;" id="newArrivalsGrid"></div>
+    </section>
+
+    <!-- ========================= BEST SELLERS ========================= -->
+    <section class="section-padding" style="padding-top: var(--space-xl);">
+        <div class="container reveal" style="text-align:center; margin-bottom: 3rem;">
+            <span class="section-label">Most Loved</span>
+            <h2 class="text-xl section-heading">Best Sellers</h2>
+        </div>
+        <div class="product-grid" style="padding: 0 5vw;" id="bestSellersGrid"></div>
+    </section>
+
+    <!-- ========================= FEATURED COLLECTIONS ========================= -->
+    <section class="section-padding" style="padding: 0 5vw;">
+        <div class="container reveal" style="text-align:center; margin-bottom: 3rem;">
+            <span class="section-label">Curated</span>
+            <h2 class="text-xl section-heading">Featured Collections</h2>
+        </div>
+        <div class="collection-grid reveal" style="padding: 0 5vw;">
+            <a href="shop.html?filter=oud" class="collection-card">
+                <img src="https://images.unsplash.com/photo-1587017539504-67cfbddac569?q=80&w=800&auto=format&fit=crop" alt="Oud Collection" loading="lazy">
+                <div class="collection-card-overlay">
+                    <h3>Oud Collection</h3>
+                    <p>Deep, smoky, spiritual.</p>
+                    <span class="btn btn-sm" style="align-self:flex-start; margin-top:0.5rem;">Explore</span>
+                </div>
+            </a>
+            <a href="shop.html?filter=floral" class="collection-card">
+                <img src="https://images.unsplash.com/photo-1595425970377-c9703d740873?q=80&w=800&auto=format&fit=crop" alt="Floral Collection" loading="lazy">
+                <div class="collection-card-overlay">
+                    <h3>Floral Collection</h3>
+                    <p>Romantic, petaled, luminous.</p>
+                    <span class="btn btn-sm" style="align-self:flex-start; margin-top:0.5rem;">Explore</span>
+                </div>
+            </a>
+            <a href="shop.html?filter=citrus" class="collection-card">
+                <img src="https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?q=80&w=800&auto=format&fit=crop" alt="Citrus Collection" loading="lazy">
+                <div class="collection-card-overlay">
+                    <h3>Citrus Collection</h3>
+                    <p>Bright, vivid, energizing.</p>
+                    <span class="btn btn-sm" style="align-self:flex-start; margin-top:0.5rem;">Explore</span>
+                </div>
+            </a>
+            <a href="shop.html?filter=woody" class="collection-card">
+                <img src="https://images.unsplash.com/photo-1588159343745-42eddbe3f5df?q=80&w=800&auto=format&fit=crop" alt="Woody Collection" loading="lazy">
+                <div class="collection-card-overlay">
+                    <h3>Woody Collection</h3>
+                    <p>Warm, earthy, grounding.</p>
+                    <span class="btn btn-sm" style="align-self:flex-start; margin-top:0.5rem;">Explore</span>
+                </div>
+            </a>
+            <a href="shop.html?filter=limited" class="collection-card">
+                <img src="https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=800&auto=format&fit=crop" alt="Limited Edition" loading="lazy">
+                <div class="collection-card-overlay">
+                    <h3>Limited Edition</h3>
+                    <p>Rare, numbered, unforgettable.</p>
+                    <span class="btn btn-sm" style="align-self:flex-start; margin-top:0.5rem;">Explore</span>
+                </div>
+            </a>
+            <a href="shop.html?filter=signature" class="collection-card">
+                <img src="https://images.unsplash.com/photo-1615529420084-2a13ae85a3c6?q=80&w=800&auto=format&fit=crop" alt="Signature Collection" loading="lazy">
+                <div class="collection-card-overlay">
+                    <h3>Signature Collection</h3>
+                    <p>Iconic, timeless, defining.</p>
+                    <span class="btn btn-sm" style="align-self:flex-start; margin-top:0.5rem;">Explore</span>
+                </div>
+            </a>
+        </div>
+    </section>
+
+    <!-- ========================= SCENT NOTES ========================= -->
+    <section class="section-padding" style="padding: 0 5vw;">
+        <div class="container reveal" style="text-align:center; margin-bottom: 4rem;">
+            <span class="section-label">The Anatomy of Scent</span>
+            <h2 class="text-xl section-heading">Fragrance Layers</h2>
+            <p class="section-desc" style="margin: 0 auto;">Every Salaam fragrance unfolds in three acts — an opening, a heart, and a lasting impression.</p>
+        </div>
+        <div class="notes-grid reveal" style="padding: 0 5vw;">
+            <div class="note-column">
+                <div class="note-icon">✦</div>
+                <h3 class="text-gold-gradient">Top Notes</h3>
+                <p style="font-size:0.85rem; margin-bottom:1.5rem; color: var(--text-muted);">The first impression — bright and ephemeral.</p>
+                <div class="note-item">Bergamot</div>
+                <div class="note-item">Lemon Zest</div>
+                <div class="note-item">Pink Pepper</div>
+                <div class="note-item">Mandarin</div>
+            </div>
+            <div class="note-column">
+                <div class="note-icon">❋</div>
+                <h3 class="text-gold-gradient">Heart Notes</h3>
+                <p style="font-size:0.85rem; margin-bottom:1.5rem; color: var(--text-muted);">The core character — rich and complex.</p>
+                <div class="note-item">Turkish Rose</div>
+                <div class="note-item">Jasmine Sambac</div>
+                <div class="note-item">French Lavender</div>
+                <div class="note-item">Iris Absolute</div>
+            </div>
+            <div class="note-column">
+                <div class="note-icon">◈</div>
+                <h3 class="text-gold-gradient">Base Notes</h3>
+                <p style="font-size:0.85rem; margin-bottom:1.5rem; color: var(--text-muted);">The lasting memory — deep and sensual.</p>
+                <div class="note-item">Aged Oud</div>
+                <div class="note-item">Sandalwood</div>
+                <div class="note-item">Amber</div>
+                <div class="note-item">White Musk</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================= OUR CRAFTSMANSHIP ========================= -->
+    <section class="section-padding" style="padding: 0 5vw;">
+        <div class="container reveal" style="text-align:center; margin-bottom: 4rem;">
+            <span class="section-label">The Process</span>
+            <h2 class="text-xl section-heading">Our Craftsmanship</h2>
+        </div>
+
+        <div class="craft-grid reveal" style="padding: 0 5vw; margin-bottom: var(--space-xl);">
+            <div>
+                <span class="section-label">01 / Sourcing</span>
+                <h3 class="text-lg" style="margin-bottom: 1.5rem;">The Rarest Ingredients</h3>
+                <p style="font-size: 1.05rem; line-height: 1.8;">We travel to the remote corners of the world — the ancient Oud forests of Assam, the rose valleys of Taif, the lavender fields of Provence — to hand-select only the finest raw materials for our compositions.</p>
+            </div>
+            <div class="craft-img-container">
+                <img src="https://images.unsplash.com/photo-1608528577888-ea9333da56ff?q=80&w=900&auto=format&fit=crop" alt="Ingredient Sourcing" class="craft-img" loading="lazy">
+            </div>
+        </div>
+
+        <div class="craft-grid reversed reveal" style="padding: 0 5vw; margin-bottom: var(--space-xl);">
+            <div>
+                <span class="section-label">02 / Blending</span>
+                <h3 class="text-lg" style="margin-bottom: 1.5rem;">A Master Perfumer's Touch</h3>
+                <p style="font-size: 1.05rem; line-height: 1.8;">Each formula is meticulously developed over months. Our master perfumers combine decades of expertise with artistic intuition, layering notes until every accord is in perfect harmony.</p>
+            </div>
+            <div class="craft-img-container">
+                <img src="https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=900&auto=format&fit=crop" alt="Fragrance Blending" class="craft-img" loading="lazy">
+            </div>
+        </div>
+
+        <div class="craft-grid reveal" style="padding: 0 5vw;">
+            <div>
+                <span class="section-label">03 / Design</span>
+                <h3 class="text-lg" style="margin-bottom: 1.5rem;">Bottles as Art</h3>
+                <p style="font-size: 1.05rem; line-height: 1.8;">The vessel must be worthy of the composition. Each bottle is designed as a sculptural object — hand-polished crystal glass, weighted for presence, finished with gold-leaf detailing.</p>
+            </div>
+            <div class="craft-img-container">
+                <img src="https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=900&auto=format&fit=crop" alt="Bottle Design" class="craft-img" loading="lazy">
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================= CUSTOMER REVIEWS ========================= -->
+    <section class="section-padding">
+        <div class="container reveal" style="text-align:center; margin-bottom: 2rem;">
+            <span class="section-label">Voices</span>
+            <h2 class="text-xl section-heading">What Our Clients Say</h2>
+        </div>
+        <div class="testimonial-slider reveal" id="testimonialSlider">
+            <div class="testimonial-track" id="testimonialTrack">
+                <div class="testimonial-card">
+                    <div class="testimonial-rating">★★★★★</div>
+                    <p class="testimonial-text">"This fragrance is incredibly refined and lasts all day. Salaam truly captures elegance in a bottle."</p>
+                    <p class="testimonial-author">— Amina K.</p>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-rating">★★★★★</div>
+                    <p class="testimonial-text">"Midnight Oud is unlike anything I've ever experienced. Deep, spiritual, and impossibly beautiful."</p>
+                    <p class="testimonial-author">— James R.</p>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-rating">★★★★★</div>
+                    <p class="testimonial-text">"I receive compliments every single time I wear Velvet Amber. It's my signature now."</p>
+                    <p class="testimonial-author">— Sofia L.</p>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-rating">★★★★★</div>
+                    <p class="testimonial-text">"The quality of ingredients is evident from the first spray. This is what real luxury smells like."</p>
+                    <p class="testimonial-author">— Omar H.</p>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-rating">★★★★★</div>
+                    <p class="testimonial-text">"From the packaging to the scent itself — every detail feels intentional and premium. Exceptional."</p>
+                    <p class="testimonial-author">— Claire D.</p>
+                </div>
+            </div>
+            <div class="slider-dots" id="sliderDots"></div>
+        </div>
+    </section>
+
+    <!-- ========================= DISCOVER YOUR SCENT CTA ========================= -->
+    <section class="cta-section reveal">
+        <span class="section-label">Your Journey Awaits</span>
+        <h2 class="text-xl" style="margin-bottom: 1.5rem;">Find the scent that defines you.</h2>
+        <p class="section-desc" style="margin: 0 auto 2rem;">Explore the full Salaam collection and discover fragrances crafted for the extraordinary.</p>
+        <a href="shop.html" class="btn btn-gold">Shop All Fragrances</a>
+    </section>
+
+    <!-- ========================= FOOTER ========================= -->
+    <footer class="footer">
+        <div class="footer-grid">
+            <div class="footer-col">
+                <h4 class="text-gold-gradient" style="font-size:1.3rem; letter-spacing:0.15em;">SALAAM</h4>
+                <p class="footer-brand-desc">The pinnacle of luxury fragrance. Each creation is an ode to the art of perfumery, crafted with the world's most rare and exquisite ingredients.</p>
+                <div class="social-icons">
+                    <a href="#" aria-label="Instagram">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/></svg>
+                    </a>
+                    <a href="#" aria-label="TikTok">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12a4 4 0 104 4V4a5 5 0 005 5"/></svg>
+                    </a>
+                    <a href="#" aria-label="Pinterest">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 16c0-4 4-8 4-8s4 4 4 8M12 8v12"/></svg>
+                    </a>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h4>Navigation</h4>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="shop.html">Shop</a></li>
+                    <li><a href="about.html">About</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Collections</h4>
+                <ul>
+                    <li><a href="shop.html?filter=oud">Oud</a></li>
+                    <li><a href="shop.html?filter=floral">Floral</a></li>
+                    <li><a href="shop.html?filter=citrus">Citrus</a></li>
+                    <li><a href="shop.html?filter=woody">Woody</a></li>
+                    <li><a href="shop.html?filter=limited">Limited Edition</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Newsletter</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Subscribe for early access, exclusive offers, and editorial stories.</p>
+                <form class="newsletter-form" onsubmit="event.preventDefault(); this.querySelector('button').textContent='Subscribed ✓';">
+                    <input type="email" placeholder="Your email address" required>
+                    <button type="submit">Join</button>
+                </form>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Salaam Fragrances. All rights reserved.</p>
+            <div style="display: flex; gap: 1.5rem;">
+                <a href="#" style="color: var(--text-muted); text-decoration: none;">Privacy</a>
+                <a href="#" style="color: var(--text-muted); text-decoration: none;">Terms</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/cart.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/scroll-animation.js"></script>
+    <script>
+    /* ===== HOMEPAGE — Full Product Data + Detail Modal ===== */
+    document.addEventListener('DOMContentLoaded', () => {
+
+        /* ===== Complete Product Data (unique details, multiple images) ===== */
+        const allProducts = [
+            {
+                id: 101, title: "Velvet Amber", category: "oud", price: "$295", rating: 5, reviews: 127,
+                desc: "A warm, enveloping fragrance that wraps you in layers of amber resin, smoked vanilla, and precious labdanum. Velvet Amber opens with a vibrant saffron spark before settling into a molten heart of golden amber and tonka. The dry-down is pure warmth — a trail of sandalwood and benzoin that lingers for hours.",
+                top: "Saffron, Pink Pepper", heart: "Amber Resin, Smoked Vanilla", base: "Labdanum, Sandalwood, Benzoin",
+                volume: "100ml", concentration: "Eau de Parfum",
+                images: [
+                    "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=800&auto=format&fit=crop",
+                    "https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=800&auto=format&fit=crop",
+                    "https://images.unsplash.com/photo-1563170351-be82bc888aa4?q=80&w=800&auto=format&fit=crop",
+                    "https://images.unsplash.com/photo-1590736969955-71cc94901144?q=80&w=800&auto=format&fit=crop"
+                ]
+            },
+            {
+                id: 102, title: "Golden Citrus", category: "citrus", price: "$195", rating: 4, reviews: 89,
+                desc: "A sun-drenched, Mediterranean jewel. Golden Citrus captures the essence of a Sicilian morning — vivid lemon zest, sparkling grapefruit, and white tea leaves dancing over a fresh sea breeze. The base of aromatic cedarwood and light musk gives it surprising depth and longevity for a citrus fragrance.",
+                top: "Sicilian Lemon, Grapefruit", heart: "White Tea, Neroli", base: "Cedarwood, Light Musk",
+                volume: "75ml", concentration: "Eau de Toilette",
+                images: [
+                    "https://images.unsplash.com/photo-1523293182086-7651a899d37f?q=80&w=800&auto=format&fit=crop",
+                    "https://images.unsplash.com/photo-1547887538-e3a2f32cb1cc?q=80&w=800&auto=format&fit=crop",
+                    "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=800&auto=format&fit=crop",
+                    "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?q=80&w=800&auto=format&fit=crop"
+                ]
+            },
+            {
+                id: 103, title: "Desert Rose", category: "floral", price: "$265", rating: 5, reviews: 204,
+                desc: "Inspired by the legendary Taif rose harvest under Arabian moonlight. Desert Rose pairs the intoxicating sweetness of Damask rose with threads of saffron and warm coriander seed. On the skin it blossoms into a complex, dry amber heart laced with geranium — a romance of Eastern poetry and Western elegance.",
+                top: "Saffron, Coriander", heart: "Taif Rose, Geranium", base: "Dry Amber, Oud, Cedar",
+                volume: "100ml", concentration: "Extrait de Parfum",
+                images: [
+                    "https://images.unsplash.com/photo-1595425970377-c9703d740873?q=80&w=800&auto=format&fit=crop",
+                    "https://images.unsplash.com/photo-1557170334-a9632e77c6e4?q=80&w=800&auto=format&fit=crop",
+                    "https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?q=80&w=800&auto=format&fit=crop",
+                    "https://images.unsplash.com/photo-1615529420084-2a13ae85a3c6?q=80&w=800&auto=format&fit=crop"
+                ]
+            },
+            {
+                id: 104, title: "Noir Absolu", category: "oud", price: "$350", rating: 5, reviews: 91,
+                desc: "Unapologetically dark. Noir Absolu is a Limited Edition creation featuring aged Laotian oud at its core — smoky, animalic, and intensely complex. Dark plum and black pepper provide a dramatic opening that gives way to leather accord and ancient temple incense. Only 500 numbered bottles exist worldwide.",
+                top: "Dark Plum, Black Pepper", heart: "Aged Oud, Leather Accord", base: "Incense, Castoreum, Ebony",
+                volume: "50ml", concentration: "Parfum (Limited Edition)",
+                images: [
+                    "https://images.unsplash.com/photo-1587017539504-67cfbddac569?q=80&w=800&auto=format&fit=crop",
+                    "https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=800&auto=format&fit=crop",
+                    "https://images.unsplash.com/photo-1563170351-be82bc888aa4?q=80&w=800&auto=format&fit=crop",
+                    "https://images.unsplash.com/photo-1585386959984-a4155224a1ad?q=80&w=800&auto=format&fit=crop"
+                ]
+            },
+            {
+                id: 105, title: "Ivory Musk", category: "woody", price: "$230", rating: 4, reviews: 156,
+                desc: "Clean luxury, distilled. Ivory Musk is the effortless scent — a veil of white musk, polished cedarwood, and the softest clean amber. Opening with aldehydes and bright bergamot, it settles into a skin-like, addictive warmth that draws people closer. The fragrance you reach for every day, yet never tire of.",
+                top: "Aldehydes, Bergamot", heart: "White Musk, Peony", base: "Cedarwood, Clean Amber",
+                volume: "100ml", concentration: "Eau de Parfum",
+                images: [
+                    "https://images.unsplash.com/photo-1585386959984-a4155224a1ad?q=80&w=800&auto=format&fit=crop",
+                    "https://images.unsplash.com/photo-1590736969955-71cc94901144?q=80&w=800&auto=format&fit=crop",
+                    "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=800&auto=format&fit=crop",
+                    "https://images.unsplash.com/photo-1547887538-e3a2f32cb1cc?q=80&w=800&auto=format&fit=crop"
+                ]
+            },
+            {
+                id: 106, title: "Jardin de Nuit", category: "floral", price: "$275", rating: 5, reviews: 178,
+                desc: "A moonlit garden captured in glass. Jardin de Nuit opens with lush green notes and Italian mandarin, unveiling a hypnotic bouquet of night-blooming jasmine sambac, creamy tuberose, and white gardenia. The base of cool vetiver, velvet musk, and damp moss evokes walking through a secret garden after midnight rain.",
+                top: "Green Notes, Mandarin", heart: "Night Jasmine, Tuberose, Gardenia", base: "Vetiver, Musk, Moss",
+                volume: "100ml", concentration: "Eau de Parfum Intense",
+                images: [
+                    "https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?q=80&w=800&auto=format&fit=crop",
+                    "https://images.unsplash.com/photo-1595425970377-c9703d740873?q=80&w=800&auto=format&fit=crop",
+                    "https://images.unsplash.com/photo-1557170334-a9632e77c6e4?q=80&w=800&auto=format&fit=crop",
+                    "https://images.unsplash.com/photo-1615529420084-2a13ae85a3c6?q=80&w=800&auto=format&fit=crop"
+                ]
+            },
+            /* ---- Best Sellers ---- */
+            {
+                id: 1, title: "Midnight Oud", category: "oud", price: "$280", rating: 5, reviews: 312, best: true,
+                desc: "Our most iconic creation. Midnight Oud is a deep, spiritual journey through ancient forests. Wild Cambodian oud — smoky, resinous, and slightly sweet — is framed by saffron and cardamom before settling into a sensual base of dark musk, warm amber, and creamy Mysore sandalwood. Unmistakable and utterly unforgettable.",
+                top: "Saffron, Cardamom", heart: "Agarwood (Oud), Rose Absolute", base: "Dark Musk, Amber, Sandalwood",
+                volume: "100ml", concentration: "Extrait de Parfum",
+                images: [
+                    "https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=800&auto=format&fit=crop",
+                    "https://images.unsplash.com/photo-1587017539504-67cfbddac569?q=80&w=800&auto=format&fit=crop",
+                    "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=800&auto=format&fit=crop",
+                    "https://images.unsplash.com/photo-1563170351-be82bc888aa4?q=80&w=800&auto=format&fit=crop"
+                ]
+            },
+            {
+                id: 5, title: "Royal Amber", category: "oud", price: "$340", rating: 5, reviews: 246, best: true,
+                desc: "Liquid gold for the skin. Royal Amber is our most opulent composition — precious amber resin, golden-bright and luminous, fused with rich benzoin, sweet labdanum, and a veil of aged oud. The opening of warming cinnamon bark and orange blossom absolute is like stepping into a palace draped in silk.",
+                top: "Cinnamon, Orange Blossom", heart: "Amber, Benzoin", base: "Oud, Labdanum, Vanilla",
+                volume: "100ml", concentration: "Parfum",
+                images: [
+                    "https://images.unsplash.com/photo-1563170351-be82bc888aa4?q=80&w=800&auto=format&fit=crop",
+                    "https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=800&auto=format&fit=crop",
+                    "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=800&auto=format&fit=crop",
+                    "https://images.unsplash.com/photo-1590736969955-71cc94901144?q=80&w=800&auto=format&fit=crop"
+                ]
+            },
+            {
+                id: 2, title: "Rose Imperial", category: "floral", price: "$240", rating: 4, reviews: 187, best: true,
+                desc: "An opulent floral masterpiece worthy of royalty. Bulgarian rose drenched in morning dew meets powdery iris and a bright spark of pink pepper. As it dries, Rose Imperial reveals a sophisticated base of white musk and cashmere wood — soft, feminine, and regal. A modern classic for those who command attention effortlessly.",
+                top: "Pink Pepper, Bergamot", heart: "Bulgarian Rose, Iris", base: "White Musk, Cashmere Wood",
+                volume: "75ml", concentration: "Eau de Parfum",
+                images: [
+                    "https://images.unsplash.com/photo-1557170334-a9632e77c6e4?q=80&w=800&auto=format&fit=crop",
+                    "https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?q=80&w=800&auto=format&fit=crop",
+                    "https://images.unsplash.com/photo-1595425970377-c9703d740873?q=80&w=800&auto=format&fit=crop",
+                    "https://images.unsplash.com/photo-1615529420084-2a13ae85a3c6?q=80&w=800&auto=format&fit=crop"
+                ]
+            },
+            {
+                id: 4, title: "Sandalwood Reserve", category: "woody", price: "$310", rating: 5, reviews: 203, best: true,
+                desc: "The ultimate sandalwood experience. We source the finest 50-year-old Mysore sandalwood — creamy, sacred, and impossibly smooth — and frame it with aromatic cardamom and resinous elemi. The heart unfolds with delicate orris root, while the base of tonka bean, Madagascar vanilla, and supple leather creates a scent of quiet, enduring power.",
+                top: "Cardamom, Elemi", heart: "Mysore Sandalwood, Orris Root", base: "Tonka Bean, Vanilla, Leather",
+                volume: "100ml", concentration: "Eau de Parfum",
+                images: [
+                    "https://images.unsplash.com/photo-1590736969955-71cc94901144?q=80&w=800&auto=format&fit=crop",
+                    "https://images.unsplash.com/photo-1585386959984-a4155224a1ad?q=80&w=800&auto=format&fit=crop",
+                    "https://images.unsplash.com/photo-1547887538-e3a2f32cb1cc?q=80&w=800&auto=format&fit=crop",
+                    "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?q=80&w=800&auto=format&fit=crop"
+                ]
+            }
+        ];
+
+        const newArrivals = allProducts.filter(p => p.id >= 100);
+        const bestSellers = allProducts.filter(p => p.best);
+
+        /* ===== Render Card (with View Details button) ===== */
+        const renderCard = (p, isBestSeller = false) => {
+            const stars = p.rating ? '★'.repeat(p.rating) + '☆'.repeat(5 - p.rating) : '';
+            return `
+                <div class="product-card reveal" style="animation-delay:0s;">
+                    <div class="product-img-wrapper">
+                        ${isBestSeller ? '<span class="best-seller-tag">Best Seller</span>' : ''}
+                        <img src="${p.images[0]}" alt="${p.title}" class="product-img" loading="lazy">
+                    </div>
+                    <div class="product-info">
+                        <span class="product-category">${p.category} Collection</span>
+                        <h3 class="product-title">${p.title}</h3>
+                        <p class="product-desc">${p.desc.substring(0, 85)}…</p>
+                        ${stars ? `<div class="product-rating">${stars}</div>` : ''}
+                        <div class="product-price">${p.price}</div>
+                        <div class="product-actions">
+                            <button class="btn btn-sm view-details-btn" data-product-id="${p.id}">View Details</button>
+                            <button class="btn btn-sm add-cart-btn" onclick="SalaamCart.addItem({id:${p.id},title:'${p.title}',price:'${p.price}',image:'${p.images[0]}'})">Add to Cart</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        document.getElementById('newArrivalsGrid').innerHTML = newArrivals.map(p => renderCard(p)).join('');
+        document.getElementById('bestSellersGrid').innerHTML = bestSellers.map(p => renderCard(p, true)).join('');
+
+        /* ===== Product Detail Modal ===== */
+        let currentGalleryIndex = 0;
+        let currentGalleryImages = [];
+
+        const openModal = (product) => {
+            const modal = document.getElementById('productModal');
+            const stars = '★'.repeat(product.rating) + '☆'.repeat(5 - product.rating);
+
+            // Fill details
+            document.getElementById('modalCategory').textContent = product.category + ' Collection';
+            document.getElementById('modalTitle').textContent = product.title;
+            document.getElementById('modalStars').textContent = stars;
+            document.getElementById('modalReviews').textContent = `(${product.reviews} reviews)`;
+            document.getElementById('modalPrice').textContent = product.price;
+            document.getElementById('modalDesc').textContent = product.desc;
+            document.getElementById('noteTop').textContent = product.top;
+            document.getElementById('noteHeart').textContent = product.heart;
+            document.getElementById('noteBase').textContent = product.base;
+
+            // Specs
+            document.getElementById('modalSpecs').innerHTML = `
+                <div class="modal-spec"><div class="modal-spec-label">Volume</div><div class="modal-spec-value">${product.volume}</div></div>
+                <div class="modal-spec"><div class="modal-spec-label">Concentration</div><div class="modal-spec-value">${product.concentration}</div></div>
+            `;
+
+            // Gallery
+            currentGalleryImages = product.images;
+            currentGalleryIndex = 0;
+            const mainEl = document.getElementById('galleryMain');
+            const thumbsEl = document.getElementById('galleryThumbs');
+            mainEl.innerHTML = product.images.map((src, i) =>
+                `<img src="${src}" alt="${product.title} view ${i + 1}" class="${i === 0 ? 'active' : ''}">`
+            ).join('');
+            thumbsEl.innerHTML = product.images.map((src, i) =>
+                `<div class="gallery-thumb ${i === 0 ? 'active' : ''}" data-index="${i}"><img src="${src}" alt="Thumbnail ${i + 1}"></div>`
+            ).join('');
+
+            // Add to Cart
+            document.getElementById('modalAddCart').onclick = () => {
+                SalaamCart.addItem({ id: product.id, title: product.title, price: product.price, image: product.images[0] });
+            };
+
+            modal.classList.add('open');
+        };
+
+        const setGallerySlide = (index) => {
+            currentGalleryIndex = index;
+            document.querySelectorAll('#galleryMain img').forEach((img, i) => img.classList.toggle('active', i === index));
+            document.querySelectorAll('#galleryThumbs .gallery-thumb').forEach((th, i) => th.classList.toggle('active', i === index));
+        };
+
+        // Gallery arrows
+        document.getElementById('galleryPrev')?.addEventListener('click', () => {
+            setGallerySlide((currentGalleryIndex - 1 + currentGalleryImages.length) % currentGalleryImages.length);
+        });
+        document.getElementById('galleryNext')?.addEventListener('click', () => {
+            setGallerySlide((currentGalleryIndex + 1) % currentGalleryImages.length);
+        });
+
+        // Gallery thumbs
+        document.getElementById('galleryThumbs')?.addEventListener('click', (e) => {
+            const thumb = e.target.closest('.gallery-thumb');
+            if (thumb) setGallerySlide(parseInt(thumb.dataset.index));
+        });
+
+        // Close modal
+        document.getElementById('modalClose')?.addEventListener('click', () => {
+            document.getElementById('productModal').classList.remove('open');
+        });
+        document.getElementById('productModal')?.addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+        });
+
+        // View Details — event delegation
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('.view-details-btn');
+            if (btn) {
+                const productId = parseInt(btn.dataset.productId);
+                const product = allProducts.find(p => p.id === productId);
+                if (product) openModal(product);
+            }
+        });
+
+        /* ===== Re-observe reveal elements ===== */
+        const revealEls = document.querySelectorAll('.reveal:not(.visible)');
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+        }, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
+        revealEls.forEach(el => observer.observe(el));
+
+        /* ===== Testimonial Slider ===== */
+        const track = document.getElementById('testimonialTrack');
+        const dotsContainer = document.getElementById('sliderDots');
+        if (track && dotsContainer) {
+            const slides = track.querySelectorAll('.testimonial-card');
+            let current = 0;
+            slides.forEach((_, i) => {
+                const dot = document.createElement('button');
+                dot.className = 'slider-dot' + (i === 0 ? ' active' : '');
+                dot.addEventListener('click', () => goTo(i));
+                dotsContainer.appendChild(dot);
+            });
+            const goTo = (index) => {
+                current = index;
+                track.style.transform = `translateX(-${current * 100}%)`;
+                dotsContainer.querySelectorAll('.slider-dot').forEach((d, i) => d.classList.toggle('active', i === current));
+            };
+            setInterval(() => goTo((current + 1) % slides.length), 5000);
+        }
+
+        /* ===== Scroll indicator fade ===== */
+        const indicator = document.getElementById('scrollIndicator');
+        if (indicator) {
+            window.addEventListener('scroll', () => {
+                indicator.style.opacity = window.scrollY > 200 ? '0' : '0.5';
+                indicator.style.pointerEvents = window.scrollY > 200 ? 'none' : 'auto';
+            }, { passive: true });
+        }
+    });
+    </script>
+</body>
+</html>
